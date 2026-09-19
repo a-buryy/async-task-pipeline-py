@@ -17,6 +17,8 @@ This project uses `uv` (Python 3.12+) for dependency management. All dev tools r
 
 Pre-commit hooks (`.pre-commit-config.yaml`) run the locked tools through `uv run`: ruff check and ruff format --check on staged Python files, and mypy on the whole project.
 
+CI (`.github/workflows/ci.yml`) runs the same lint, format and type checks, and the tests on Python 3.12–3.14, on every push to `main` and every PR. Pushing a `v*` tag also publishes to PyPI via trusted publishing; the tag must equal `v` + the version in `pyproject.toml`, or the build job fails.
+
 mypy runs with `strict = true`, relaxed for `tests.*` (untyped test helpers are allowed, their bodies still checked). That override matches only because `tests/__init__.py` exists — keep the empty file.
 
 ## Compatibility and packaging

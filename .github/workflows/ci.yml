@@ -1,0 +1,106 @@
+---
+name: CI
+
+"on":
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+
+permissions:
+  contents: read
+
+# A new push to a PR cancels its superseded run; runs on `main` and tags always finish, so a publish is never cut off.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v10.1.0
+        with:
+          enable-cache: true
+      - run: uv sync --locked
+      - run: uv run ruff check .
+      - run: uv run ruff format --check .
+      - run: uv run mypy .
+
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.12", "3.13", "3.14"]
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v10.1.0
+        with:
+          python-version: ${{ matrix.python-version }}
+          enable-cache: true
+      - run: uv sync --locked
+      - run: uv run pytest tests/
+
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v10.1.0
+      - run: uv build
+      # Import from the built wheel in a clean environment (`-I` keeps the source tree off `sys.path`),
+      # so a module or `py.typed` missing from the wheel fails here instead of after publishing.
+      - name: Check the wheel installs and imports
+        run: |
+          uv run --no-cache --isolated --no-project --with dist/*.whl python -I -c '
+          import asyncio, pathlib, sys
+          import async_task_pipeline as package
+          from async_task_pipeline import TaskPipeline
+
+          location = pathlib.Path(package.__file__).parent
+          assert "site-packages" in location.parts, f"imported from {location}, not the wheel"
+          assert (location / "py.typed").is_file(), "py.typed missing from the wheel"
+          assert package.__version__ == sys.argv[1], f"{package.__version__} != {sys.argv[1]}"
+
+          async def double(value: int) -> int:
+              return value * 2
+
+          async def main() -> list[int]:
+              async with TaskPipeline() as pipeline:
+                  doubled = pipeline.start_many(double, [1, 2, 3])
+              return doubled.result()
+
+          assert asyncio.run(main()) == [2, 4, 6]
+          print(f"async_task_pipeline {package.__version__} OK from {location}")
+          ' "$(uv version --short)"
+      # The tag must name the version being published, or the release would ship under the wrong number.
+      - name: Check tag matches version
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          version="$(uv version --short)"
+          test "${GITHUB_REF_NAME}" = "v${version}" \
+            || { echo "Tag ${GITHUB_REF_NAME} does not match version ${version} in pyproject.toml"; exit 1; }
+      - uses: actions/upload-artifact@v7
+        with:
+          name: dist
+          path: dist/
+          retention-days: 7
+
+  publish:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [lint, test, build]
+    runs-on: ubuntu-latest
+    # Must match the environment named in the PyPI trusted publisher.
+    environment:
+      name: pypi
+      url: https://pypi.org/project/async-task-pipeline-py/
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          name: dist
+          path: dist/
+      - uses: astral-sh/setup-uv@v10.1.0
+      - run: uv publish --trusted-publishing always
