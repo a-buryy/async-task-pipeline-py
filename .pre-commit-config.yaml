@@ -1,0 +1,30 @@
+---
+# Hooks run the tools locked in `uv.lock` through `uv run`, so they match `uv run ruff` / `uv run mypy`.
+repos:
+  - repo: local
+    hooks:
+      - id: ruff-check
+        name: ruff check
+        description: "Check code style using ruff"
+        entry: uv run ruff check
+        language: system
+        types_or: [python, pyi]
+        require_serial: true
+
+      - id: ruff-format
+        name: ruff format
+        description: "Check code format using ruff"
+        entry: uv run ruff format --check --diff
+        language: system
+        types_or: [python, pyi]
+        require_serial: true
+
+      # Checks the whole project, as `uv run mypy .` does: staged files alone miss breakage in their importers.
+      - id: mypy
+        name: mypy
+        description: "Run 'mypy' - static type checker"
+        entry: uv run mypy .
+        language: system
+        types_or: [python, pyi]
+        pass_filenames: false
+        require_serial: true

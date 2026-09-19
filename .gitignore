@@ -1,0 +1,30 @@
+# Python bytecode
+__pycache__/
+*.py[cod]
+
+# Build artifacts
+build/
+dist/
+*.egg-info/
+
+# Environments and secrets
+.venv/
+.env
+.local.env
+
+# Tool caches
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+
+# Editors and OS
+.idea/
+.vscode/
+.DS_Store
+
+# Coding agents
+.agent/
+.claude/
+
+# Local sandbox dir
+.sandbox/

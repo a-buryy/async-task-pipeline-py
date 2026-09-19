@@ -1,0 +1,148 @@
+[project]
+name = "async-task-pipeline-py"
+version = "0.1.0"
+description = "A TaskGroup-style scope for async tasks with dependencies and bounded concurrency."
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [
+    { name = "Andrii Buryi", email = "Andriy07ua@proton.me" },
+]
+keywords = [
+    "asyncio",
+    "concurrency",
+    "dag",
+    "pipeline",
+    "task-graph",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Framework :: AsyncIO",
+    "Intended Audience :: Developers",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Software Development :: Libraries",
+    "Typing :: Typed",
+]
+requires-python = ">=3.12"
+dependencies = []
+
+[project.urls]
+Repository = "https://github.com/a-buryy/async-task-pipeline-py"
+Issues = "https://github.com/a-buryy/async-task-pipeline-py/issues"
+Changelog = "https://github.com/a-buryy/async-task-pipeline-py/blob/main/CHANGELOG.md"
+
+[build-system]
+requires = ["hatchling>=1.27"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["async_task_pipeline"]
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "/async_task_pipeline",
+    "/tests",
+    "/CHANGELOG.md",
+    "/LICENSE",
+    "/README.md",
+]
+
+[dependency-groups]
+dev = [
+    "mypy>=1.19.1",
+    "pre-commit>=4.5.1",
+    "pytest>=9.0.2",
+    "pytest-asyncio>=1.3.0",
+    "ruff>=0.15.0",
+]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+
+[tool.ruff]
+exclude = [
+    ".agent",
+    ".venv",
+]
+line-length = 120
+
+[tool.ruff.lint]
+select = [
+    "A",     # flake8-builtins
+    "ASYNC", # flake8-async
+    "ARG",   # flake8-unused-arguments
+    "B",     # flake8-bugbear
+    "COM",   # flake8-commas
+    "C4",    # flake8-comprehensions
+    "ERA",   # eradicate
+    "T20",   # flake8-print
+    "Q",     # flake8-quotes
+    "I",     # isort
+    "N",     # pep8-naming
+    "E",     # pycodestyle errors
+    "W",     # pycodestyle warnings
+    "F",     # pyflakes
+    "FBT",   # flake8-boolean-trap
+    "S",     # flake8-bandit
+    "PIE",   # flake8-pie
+    "T20",   # flake8-print
+    "RSE",   # flake8-raise
+    "D",     # pydocstyle
+]
+extend-select = [
+    "D213",
+    "D400",
+    "D401",
+]
+ignore = [
+    "ANN003",
+    "ANN204",
+    "ANN401",
+    "B904",
+    "B905",
+    "B911",
+    "D200",
+    "D212",
+    "D413",
+    "F722",
+]
+
+[tool.ruff.lint.per-file-ignores]
+"*/__init__.py" = [
+    "D104",
+    "F401",
+]
+"*/test_*.py" = [
+    "D205",
+    "S101",
+]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.lint.flake8-quotes]
+docstring-quotes = "double"
+inline-quotes = "single"
+
+[tool.ruff.lint.isort]
+split-on-trailing-comma = true
+force-wrap-aliases = true
+combine-as-imports = true
+lines-after-imports = 2
+
+[tool.ruff.format]
+quote-style = "single"
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+
+[[tool.mypy.overrides]]
+module = "tests.*"
+disallow_untyped_defs = false
+disallow_incomplete_defs = false
