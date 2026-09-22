@@ -87,7 +87,11 @@ import asyncio
 import functools
 from collections.abc import AsyncIterator
 
-from async_task_pipeline import TaskHandle, TaskPipeline, current_pipeline
+from async_task_pipeline import (
+    TaskHandle,
+    TaskPipeline,
+    current_pipeline,
+)
 ```
 
 ### Wiring individual tasks
