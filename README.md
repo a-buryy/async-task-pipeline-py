@@ -1,8 +1,9 @@
 # Async Task Pipeline
 
-[![PyPI](https://img.shields.io/pypi/v/async-task-pipeline-py)](https://pypi.org/project/async-task-pipeline-py/)
-[![Python](https://img.shields.io/pypi/pyversions/async-task-pipeline-py)](https://pypi.org/project/async-task-pipeline-py/)
+[![PyPI](https://img.shields.io/pypi/v/async-task-pipeline-py?cacheSeconds=1800)](https://pypi.org/project/async-task-pipeline-py/)
+[![Python](https://img.shields.io/pypi/pyversions/async-task-pipeline-py?cacheSeconds=1800)](https://pypi.org/project/async-task-pipeline-py/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue)](https://github.com/a-buryy/async-task-pipeline-py/blob/main/LICENSE)
+[![CI](https://github.com/a-buryy/async-task-pipeline-py/actions/workflows/ci.yml/badge.svg)](https://github.com/a-buryy/async-task-pipeline-py/actions/workflows/ci.yml)
 
 `async-task-pipeline-py` runs async tasks with dependencies inside a `TaskGroup`-style scope: open the pipeline with `async with`, call `start()` where you would call `create_task()`, and leaving the block waits for every task. On top of `TaskGroup` it adds:
 
