@@ -15,7 +15,7 @@ This project uses `uv` (Python 3.12+) for dependency management. All dev tools r
 
 `pytest` is configured with `asyncio_mode = "auto"` — `async def` tests run without an `@pytest.mark.asyncio` decorator.
 
-Pre-commit hooks (`.pre-commit-config.yaml`) run the locked tools through `uv run`: ruff check and ruff format --check on staged Python files, and mypy on the whole project.
+Pre-commit hooks (`.pre-commit-config.yaml`) run the locked tools through `uv run`: ruff check on staged Python files, ruff format --check on staged Python and Markdown files (ruff formats the `python` code blocks in the README), and mypy on the whole project.
 
 CI (`.github/workflows/ci.yml`) runs the same lint, format and type checks, and the tests on Python 3.12–3.14, on every push to `main` and every PR. Pushing a `v*` tag also publishes to PyPI via trusted publishing; the tag must equal `v` + the version in `pyproject.toml`, or the build job fails.
 
@@ -23,7 +23,7 @@ mypy runs with `strict = true`, relaxed for `tests.*` (untyped test helpers are 
 
 ## Compatibility and packaging
 
-- **Python 3.12–3.14.** 3.12 is the floor because of PEP 695 generics (`class TaskHandle[T]`, `def start[T]`); mypy targets 3.12 so newer typing features are flagged. `.python-version` picks the local dev interpreter only. Check other versions with `uv run --python 3.12 --isolated pytest tests/` (likewise 3.13, 3.14) — asyncio behaviour differs between them in ways static checks can't see (see the `_spawn` gotcha).
+- **Python 3.12–3.14.** 3.12 is the floor because of PEP 695 generics (`class TaskHandle[T]`, `def start[T]`); mypy targets 3.12 so newer typing features are flagged. `.python-version` picks the interpreter wherever none is given: local dev, and the CI `lint` and `build` jobs (the `test` matrix sets its own). Check other versions with `uv run --python 3.12 --isolated --no-default-groups --group test pytest tests/` (likewise 3.13, 3.14); the `test` group keeps the dev tools out, as some ship no wheels for a new Python yet — asyncio behaviour differs between them in ways static checks can't see (see the `_spawn` gotcha).
 - **Names.** The distribution is `async-task-pipeline-py`; the import package is `async_task_pipeline`. Built with hatchling, which is pointed at the package explicitly because the names differ.
 - **Installed, not path-hacked.** `__version__` comes from `importlib.metadata`, so the package must be installed; `uv sync` does an editable install, and tests import it that way rather than through a `sys.path` tweak.
 - **Public API.** `__all__` in `__init__.py` is the public surface. `py.typed` ships the annotations to users, so public signatures are part of the API too.
