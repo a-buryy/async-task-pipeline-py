@@ -16,7 +16,7 @@ repos:
         description: "Check code format using ruff"
         entry: uv run ruff format --check --diff
         language: system
-        types_or: [python, pyi]
+        types_or: [python, pyi, markdown]
         require_serial: true
 
       # Checks the whole project, as `uv run mypy .` does: staged files alone miss breakage in their importers.
