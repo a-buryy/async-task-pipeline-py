@@ -53,7 +53,7 @@ async def total(values: list[int]) -> int:
 
 
 async def main() -> None:
-    async with TaskPipeline(concurrency_limit=3) as pipeline:
+    async with TaskPipeline(max_concurrency=3) as pipeline:
         # five tasks, at most three at once
         values = pipeline.start_many(fetch, range(5), task_name='fetch')
         # runs once every fetch is done
@@ -100,7 +100,7 @@ from async_task_pipeline import (
 `start_many` hands back a single handle for the whole fan-out, so anything consuming it waits for every item. When a downstream task needs only *one* of the results, start the tasks individually and keep their handles:
 
 ```python
-async with TaskPipeline(concurrency_limit=5) as pipeline:
+async with TaskPipeline(max_concurrency=5) as pipeline:
     shards = [pipeline.start(fetch_shard, index, task_name=f'shard{index}') for index in range(5)]
 
     # Depends on one shard, so it runs as soon as that shard is ready.
@@ -316,9 +316,9 @@ Pipeline closed: 3 of 4 tasks completed.
 
 ## API reference
 
-### `TaskPipeline(concurrency_limit=10)`
+### `TaskPipeline(max_concurrency=10)`
 
-An async context manager. `concurrency_limit` bounds how many tasks *execute* at once; a task inside `wait()` does not count against it. A pipeline can be opened once, and starting a task outside its scope raises `RuntimeError`.
+An async context manager. `max_concurrency` bounds how many tasks *execute* at once; a task inside `wait()` does not count against it. A pipeline can be opened once, and starting a task outside its scope raises `RuntimeError`.
 
 | Method | Returns | Description |
 |---|---|---|

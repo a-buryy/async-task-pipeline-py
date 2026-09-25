@@ -5,7 +5,7 @@ A pipeline is a scope: open it with `async with`, start tasks inside it, and lea
 them. Tasks are plain async callables. Pass a `TaskHandle` as a direct argument to wire a dependency, and
 the pipeline replaces the handle with its task's result before invoking the callable; handles nested in
 containers are not inspected. Or `await handle.wait()` to consume a result inline, which is safe at any
-`concurrency_limit` because a waiting task gives its permit back first.
+`max_concurrency` because a waiting task gives its permit back first.
 
 `start()` schedules immediately and behaves the same whether it is called from the `async with` body or
 from inside a running task. A started task becomes an asyncio task only once its dependencies are
@@ -313,7 +313,7 @@ class TaskPipeline:
 
     Open it with `async with`, start tasks inside, and leave the scope to wait for everything to finish::
 
-        async with TaskPipeline(concurrency_limit=5) as pipeline:
+        async with TaskPipeline(max_concurrency=5) as pipeline:
             users = pipeline.start(fetch_users)
             orders = pipeline.start(fetch_orders)
             report = pipeline.start(build_report, users, orders)
@@ -321,7 +321,7 @@ class TaskPipeline:
         print(report.result())
 
     A running task starts further tasks the same way, reaching its pipeline with `current_pipeline()`, and
-    consumes them with `await handle.wait()`. `concurrency_limit` bounds tasks *executing*: a task that is
+    consumes them with `await handle.wait()`. `max_concurrency` bounds tasks *executing*: a task that is
     waiting on another one hands its permit back, so waiting inline never starves the task waited for.
 
     Failures have an owner. A task started from inside a running task is owned by that task: while the
@@ -333,25 +333,25 @@ class TaskPipeline:
     depended on a failed task are discarded.
     """
 
-    _min_concurrency_limit = 1
+    _min_concurrency = 1
 
-    def __init__(self, concurrency_limit: int = 10):
+    def __init__(self, max_concurrency: int = 10):
         """
         Construct the object.
 
         Args:
-            concurrency_limit: maximum number of tasks executing at once. Tasks awaiting another task do
+            max_concurrency: maximum number of tasks executing at once. Tasks awaiting another task do
                 not count towards it.
 
         Raises:
-            ValueError: if `concurrency_limit` is less than 1.
+            ValueError: if `max_concurrency` is less than 1.
         """
-        if concurrency_limit < self._min_concurrency_limit:
+        if max_concurrency < self._min_concurrency:
             raise ValueError(
-                f'concurrency_limit must be at least {self._min_concurrency_limit}, got {concurrency_limit}.',
+                f'max_concurrency must be at least {self._min_concurrency}, got {max_concurrency}.',
             )
 
-        self.concurrency_limit = concurrency_limit
+        self.max_concurrency = max_concurrency
         self._nodes: dict[TaskHandle[Any], _Node] = {}
         self._names: set[str] = set()
         self._name_counters: dict[str, int] = {}
@@ -388,10 +388,10 @@ class TaskPipeline:
         if self._task_group is not None or self._closed:
             raise RuntimeError('A pipeline can only be opened once; create a new one for another run.')
 
-        logger.debug('Pipeline opened with concurrency limit %d.', self.concurrency_limit)
+        logger.debug('Pipeline opened with concurrency limit %d.', self.max_concurrency)
 
         self._loop = asyncio.get_running_loop()
-        self._semaphore = asyncio.Semaphore(self.concurrency_limit)
+        self._semaphore = asyncio.Semaphore(self.max_concurrency)
         self._task_group = asyncio.TaskGroup()
         await self._task_group.__aenter__()
         self._pipeline_token = _current_pipeline.set(self)
