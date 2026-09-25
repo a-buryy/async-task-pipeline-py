@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-09-25
+
 ### Changed
 
 - **Breaking:** renamed the `TaskPipeline` parameter and attribute `concurrency_limit` to `max_concurrency`.
@@ -23,5 +25,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Wait-cycle detection, and failure handling decided by task ownership.
 - Support for Python 3.12, 3.13 and 3.14.
 
-[Unreleased]: https://github.com/a-buryy/async-task-pipeline-py/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/a-buryy/async-task-pipeline-py/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/a-buryy/async-task-pipeline-py/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/a-buryy/async-task-pipeline-py/releases/tag/v0.1.0
