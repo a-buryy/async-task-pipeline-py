@@ -113,7 +113,7 @@ async def test_pipeline_waits_on_depends_on_without_consuming():
     async def second() -> None:
         order.append('second')
 
-    async with TaskPipeline(concurrency_limit=4) as pipeline:
+    async with TaskPipeline(max_concurrency=4) as pipeline:
         upstream = pipeline.start(first)
         pipeline.start(second, depends_on=[upstream])
 
@@ -473,14 +473,14 @@ async def test_pipeline_rejects_a_handle_from_another_pipeline():
             pipeline.start(double, foreign)
 
 
-async def test_pipeline_respects_the_concurrency_limit():
+async def test_pipeline_respects_the_max_concurrency():
     """
     Case: start more tasks than the limit allows.
     Expect: no more than the limit execute at once.
     """
     task, peak = concurrency_tracker()
 
-    async with TaskPipeline(concurrency_limit=3) as pipeline:
+    async with TaskPipeline(max_concurrency=3) as pipeline:
         pipeline.start_many(task, range(12))
 
     assert peak() == 3
@@ -501,7 +501,7 @@ async def test_pipeline_starts_the_next_task_when_a_permit_frees():
 
         return task_id
 
-    async with TaskPipeline(concurrency_limit=1) as pipeline:
+    async with TaskPipeline(max_concurrency=1) as pipeline:
         pipeline.start_many(task, [('short', 0.01), ('long', 0.02)])
 
     assert events == ['start:short', 'end:short', 'start:long', 'end:long']
@@ -519,7 +519,7 @@ async def test_pipeline_spawns_tasks_only_once_they_are_ready():
         peak = max(peak, len([task for task in asyncio.all_tasks() if task.get_name().startswith('link')]))
         return value + 1
 
-    async with TaskPipeline(concurrency_limit=8) as pipeline:
+    async with TaskPipeline(max_concurrency=8) as pipeline:
         handle = pipeline.start(double, 0, task_name='seed')
 
         for index in range(50):
@@ -538,7 +538,7 @@ async def test_pipeline_awaits_inline_with_more_waiters_than_permits():
     async def parent(value: int) -> int:
         return await current_pipeline().start(double, value).wait()
 
-    async with TaskPipeline(concurrency_limit=2) as pipeline:
+    async with TaskPipeline(max_concurrency=2) as pipeline:
         parents = [pipeline.start(parent, value, task_name=f'parent{value}') for value in range(8)]
 
     assert [handle.result() for handle in parents] == [0, 2, 4, 6, 8, 10, 12, 14]
@@ -556,7 +556,7 @@ async def test_pipeline_awaits_inline_through_deep_recursion():
 
         return await current_pipeline().start(descend, depth - 1).wait()
 
-    async with TaskPipeline(concurrency_limit=1) as pipeline:
+    async with TaskPipeline(max_concurrency=1) as pipeline:
         handle = pipeline.start(descend, 5)
 
     assert handle.result() == 'bottom'
@@ -638,7 +638,7 @@ async def test_pipeline_allows_several_tasks_to_wait_on_one_handle():
         await asyncio.sleep(0.01)
         return value
 
-    async with TaskPipeline(concurrency_limit=2) as pipeline:
+    async with TaskPipeline(max_concurrency=2) as pipeline:
         shared = pipeline.start(leaf, 99, task_name='shared')
 
         async def consume() -> int:
@@ -672,7 +672,7 @@ async def test_pipeline_still_bounds_execution_while_tasks_wait():
     async def waiter(value: int) -> int:
         return await current_pipeline().start(work, value).wait()
 
-    async with TaskPipeline(concurrency_limit=3) as pipeline:
+    async with TaskPipeline(max_concurrency=3) as pipeline:
         pipeline.start_many(waiter, range(10))
 
     assert peak() == 3
@@ -687,7 +687,7 @@ async def test_pipeline_start_many_works_from_inside_a_task():
     async def parent() -> list[int]:
         return await current_pipeline().start_many(double, [1, 2, 3]).wait()
 
-    async with TaskPipeline(concurrency_limit=2) as pipeline:
+    async with TaskPipeline(max_concurrency=2) as pipeline:
         handle = pipeline.start(parent)
 
     assert handle.result() == [2, 4, 6]
@@ -770,7 +770,7 @@ async def test_a_task_spawned_by_a_task_cannot_hand_back_its_parents_permit():
 
         return await handle.wait()
 
-    async with TaskPipeline(concurrency_limit=2) as pipeline:
+    async with TaskPipeline(max_concurrency=2) as pipeline:
         handle = pipeline.start(parent)
 
     assert 'can only be waited on from inside a running pipeline task' in captured[0]
@@ -1239,14 +1239,14 @@ async def test_pipeline_cannot_be_reopened():
             pass
 
 
-@pytest.mark.parametrize('concurrency_limit', [0, -1])
-def test_pipeline_rejects_a_non_positive_concurrency_limit(concurrency_limit):
+@pytest.mark.parametrize('max_concurrency', [0, -1])
+def test_pipeline_rejects_a_non_positive_max_concurrency(max_concurrency):
     """
     Case: construct a pipeline with a limit below one.
     Expect: `ValueError` at construction rather than a hang.
     """
-    with pytest.raises(ValueError, match='concurrency_limit must be at least 1'):
-        TaskPipeline(concurrency_limit=concurrency_limit)
+    with pytest.raises(ValueError, match='max_concurrency must be at least 1'):
+        TaskPipeline(max_concurrency=max_concurrency)
 
 
 async def test_pipeline_unwinds_under_an_outer_timeout():
@@ -1496,7 +1496,7 @@ async def test_pipeline_keeps_the_limit_after_a_waiter_handles_a_failure():
 
         return -1
 
-    async with TaskPipeline(concurrency_limit=2) as pipeline:
+    async with TaskPipeline(max_concurrency=2) as pipeline:
         handlers = [pipeline.start(handler, value, task_name=f'handler{value}') for value in range(8)]
 
     assert [handle.result() for handle in handlers] == list(range(8))
@@ -1535,7 +1535,7 @@ async def test_pipeline_keeps_the_limit_when_a_wait_times_out():
 
         return await tracked(0.05)
 
-    async with TaskPipeline(concurrency_limit=1) as pipeline:
+    async with TaskPipeline(max_concurrency=1) as pipeline:
         handle = pipeline.start(parent, task_name='parent')
 
     assert handle.result() == 'done'
