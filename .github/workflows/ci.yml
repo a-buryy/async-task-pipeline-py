@@ -15,7 +15,7 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
-# The `main` ruleset requires these checks by name: lint, test (3.12), test (3.13), test (3.14), build.
+# The `main` ruleset requires these checks by name: lint, test (3.12), test (3.13), test (3.14), test (3.15), build.
 # Renaming a job, or changing the Python matrix, means updating that list in Settings > Rules > Rulesets,
 # or pull requests wait forever on a check that no longer reports. `publish` is never a required check.
 jobs:
@@ -36,7 +36,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.12", "3.13", "3.14"]
+        python-version: ["3.12", "3.13", "3.14", "3.15"]
     steps:
       - uses: actions/checkout@v7
       - uses: astral-sh/setup-uv@v10.3.0
