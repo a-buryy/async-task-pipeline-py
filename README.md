@@ -225,8 +225,7 @@ async with asyncio.timeout(30):
 `start_many` needs a synchronous iterable. It calls `list(inputs)`, so an async generator raises `TypeError: 'async_generator' object is not iterable`. Iterate it yourself and collect the handles with `gather()`:
 
 ```python
-async def pages() -> AsyncIterator[int]:
-    ...
+async def pages() -> AsyncIterator[int]: ...
 
 
 async with TaskPipeline() as pipeline:
