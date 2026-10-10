@@ -44,7 +44,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
           enable-cache: true
       - run: uv sync --locked --no-default-groups --group test
-      - run: uv run --no-sync pytest tests/
+      - run: uv run --no-sync pytest tests/ --cov
 
   build:
     runs-on: ubuntu-latest

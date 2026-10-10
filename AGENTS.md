@@ -8,6 +8,7 @@ This project uses `uv` (Python 3.12+) for dependency management. All dev tools r
 
 - Run tests: `uv run pytest tests/`
 - Run a single test: `uv run pytest tests/test_pipeline.py::test_name`
+- Run tests with coverage: `uv run pytest tests/ --cov`
 - Lint: `uv run ruff check .`
 - Format check: `uv run ruff format --check .`
 - Format (apply): `uv run ruff format .`
@@ -15,9 +16,11 @@ This project uses `uv` (Python 3.12+) for dependency management. All dev tools r
 
 `pytest` is configured with `asyncio_mode = "auto"` — `async def` tests run without an `@pytest.mark.asyncio` decorator.
 
+Coverage (`pytest-cov`, configured under `[tool.coverage]` in `pyproject.toml`) measures lines and branches of `async_task_pipeline` and fails below 90%. It runs only when `--cov` is passed, so a single test run is not judged against the whole-suite threshold. The uncovered remainder is mostly defensive `RuntimeError` guards for states the public API cannot reach; don't chase them with tests that poke at private attributes.
+
 Pre-commit hooks (`.pre-commit-config.yaml`) run the locked tools through `uv run`: ruff check on staged Python files, ruff format --check on staged Python and Markdown files (ruff formats the `python` code blocks in the README), and mypy on the whole project.
 
-CI (`.github/workflows/ci.yml`) runs the same lint, format and type checks, and the tests on Python 3.12–3.15, on every push to `main` and every PR. Pushing a `v*` tag also publishes to PyPI via trusted publishing; the tag must equal `v` + the version in `pyproject.toml`, or the build job fails.
+CI (`.github/workflows/ci.yml`) runs the same lint, format and type checks, and the tests with coverage on Python 3.12–3.15, on every push to `main` and every PR. Pushing a `v*` tag also publishes to PyPI via trusted publishing; the tag must equal `v` + the version in `pyproject.toml`, or the build job fails.
 
 mypy runs with `strict = true`, relaxed for `tests.*` (untyped test helpers are allowed, their bodies still checked). That override matches only because `tests/__init__.py` exists — keep the empty file.
 
