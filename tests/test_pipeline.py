@@ -409,6 +409,19 @@ async def test_pipeline_names_tasks_after_their_callable():
     assert sorted(pipeline.results()) == ['double', 'double#1', 'double#2', 'double#3']
 
 
+async def test_pipeline_skips_an_auto_name_already_taken_explicitly():
+    """
+    Case: name a task explicitly with what would be the next derived name, then start the callable unnamed twice.
+    Expect: the derived names step over the taken one instead of clashing with it.
+    """
+    async with TaskPipeline() as pipeline:
+        pipeline.start(double, 0, task_name='double#1')
+        pipeline.start(double, 1)
+        pipeline.start(double, 2)
+
+    assert pipeline.results() == {'double#1': 0, 'double': 2, 'double#2': 4}
+
+
 async def test_pipeline_names_an_unnamed_fan_out_after_its_callable():
     """
     Case: fan a callable out without naming the barrier.
@@ -649,6 +662,31 @@ async def test_pipeline_allows_several_tasks_to_wait_on_one_handle():
     assert [handle.result() for handle in both] == [99, 99]
 
 
+async def test_pipeline_allows_a_wait_on_a_diamond_of_dependencies():
+    """
+    Case: a task waits on a handle whose two pending dependencies share one upstream task.
+    Expect: the shared upstream task, reached twice by the cycle check, is not mistaken for a cycle.
+    """
+
+    async def leaf(value: int) -> int:
+        await asyncio.sleep(0.01)
+        return value
+
+    async def add(left: int, right: int) -> int:
+        return left + right
+
+    async def parent() -> int:
+        pipeline = current_pipeline()
+        source = pipeline.start(leaf, 1)
+        total = pipeline.start(add, pipeline.start(double, source), pipeline.start(double, source))
+        return await total.wait()
+
+    async with TaskPipeline() as pipeline:
+        handle = pipeline.start(parent)
+
+    assert handle.result() == 4
+
+
 async def test_handle_reports_whether_the_task_is_done():
     """
     Case: read `done()` before the task has run, and after the scope closes.
@@ -660,6 +698,17 @@ async def test_handle_reports_whether_the_task_is_done():
         assert handle.done() is False
 
     assert handle.done() is True
+
+
+async def test_handle_repr_shows_the_task_name():
+    """
+    Case: take the `repr()` of a handle.
+    Expect: it names the task, for debugging.
+    """
+    async with TaskPipeline() as pipeline:
+        handle = pipeline.start(double, 1, task_name='task')
+
+    assert repr(handle) == "TaskHandle('task')"
 
 
 async def test_pipeline_still_bounds_execution_while_tasks_wait():

@@ -64,10 +64,20 @@ dev = [
 test = [
     "pytest>=9.1.1",
     "pytest-asyncio>=1.4.0",
+    "pytest-cov>=7.1.0",
 ]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
+
+[tool.coverage.run]
+branch = true
+source = ["async_task_pipeline"]
+
+[tool.coverage.report]
+# Below the current figure, so a small refactor doesn't fail CI but a real drop does.
+fail_under = 90
+show_missing = true
 
 [tool.ruff]
 exclude = [

@@ -17,6 +17,12 @@ dist/
 .pytest_cache/
 .ruff_cache/
 
+# Coverage data
+.coverage
+.coverage.*
+htmlcov/
+coverage.xml
+
 # Editors and OS
 .idea/
 .vscode/
