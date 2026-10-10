@@ -16,7 +16,7 @@ This project uses `uv` (Python 3.12+) for dependency management. All dev tools r
 
 `pytest` is configured with `asyncio_mode = "auto"` — `async def` tests run without an `@pytest.mark.asyncio` decorator.
 
-Coverage (`pytest-cov`, configured under `[tool.coverage]` in `pyproject.toml`) measures lines and branches of `async_task_pipeline` and fails below 90%. It runs only when `--cov` is passed, so a single test run is not judged against the whole-suite threshold. The uncovered remainder is mostly defensive `RuntimeError` guards for states the public API cannot reach; don't chase them with tests that poke at private attributes.
+Coverage (`pytest-cov`, configured under `[tool.coverage]` in `pyproject.toml`) measures lines and branches of `async_task_pipeline` and fails below 90%. It runs only when `--cov` is passed, so a single test run is not judged against the whole-suite threshold. The uncovered remainder is mostly defensive `RuntimeError` guards for states the public API cannot reach; don't chase them with tests that poke at private attributes. The README's coverage badge is static: update its percentage by hand when coverage moves by a point or more.
 
 Pre-commit hooks (`.pre-commit-config.yaml`) run the locked tools through `uv run`: ruff check on staged Python files, ruff format --check on staged Python and Markdown files (ruff formats the `python` code blocks in the README), and mypy on the whole project.
 
